@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}New Ticket - Mini Support Ticketing System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-plus-circle me-2"></i>Create New Ticket
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="ticketForm">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Title *</label>
+                        <input type="text" class="form-control" id="title" name="title" required 
+                               minlength="3" maxlength="120" 
+                               placeholder="Brief description of the issue">
+                        <div class="form-text">Title must be between 3 and 120 characters.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description *</label>
+                        <textarea class="form-control" id="description" name="description" rows="5" required
+                                  maxlength="1000" placeholder="Detailed description of the problem..."></textarea>
+                        <div class="form-text">Description must be between 1 and 1000 characters.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="priority" class="form-label">Priority *</label>
+                        <select class="form-select" id="priority" name="priority" required>
+                            <option value="">Select priority level</option>
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left me-1"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-1"></i>Create Ticket
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('ticketForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = {
+        title: document.getElementById('title').value.trim(),
+        description: document.getElementById('description').value.trim(),
+        priority: document.getElementById('priority').value
+    };
+    
+    // Client-side validation
+    const errors = [];
+    
+    if (!formData.title) {
+        errors.push('Title is required');
+    } else if (formData.title.length < 3 || formData.title.length > 120) {
+        errors.push('Title must be between 3 and 120 characters');
+    }
+    
+    if (!formData.description) {
+        errors.push('Description is required');
+    } else if (formData.description.length < 1 || formData.description.length > 1000) {
+        errors.push('Description must be between 1 and 1000 characters');
+    }
+    
+    if (!formData.priority) {
+        errors.push('Priority is required');
+    }
+    
+    if (errors.length > 0) {
+        alert('Please fix the following errors:\n' + errors.join('\n'));
+        return;
+    }
+    
+    // Submit form
+    fetch('/api/tickets', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.errors) {
+            alert('Error: ' + data.errors.join(', '));
+        } else {
+            alert('Ticket created successfully!');
+            window.location.href = '/';
+        }
+    })
+    .catch(error => {
+        alert('Error: ' + error.message);
+    });
+});
+
+// Character counter for description
+document.getElementById('description').addEventListener('input', function() {
+    const maxLength = 1000;
+    const currentLength = this.value.length;
+    const remaining = maxLength - currentLength;
+    
+    const formText = this.parentNode.querySelector('.form-text');
+    formText.textContent = `Description must be between 1 and 1000 characters. (${remaining} characters remaining)`;
+    
+    if (remaining < 0) {
+        formText.classList.add('text-danger');
+    } else {
+        formText.classList.remove('text-danger');
+    }
+});
+</script>
+{% endblock %}
